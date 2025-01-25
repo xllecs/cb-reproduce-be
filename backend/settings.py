@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -40,11 +41,24 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'graphene_django',
     'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
     'cole_buxton_be',
 ]
 
 GRAPHENE = {
 	'SCHEMA':'backend.schema.schema'
+}
+
+REST_FRAMEWORK = {
+  'DEFAULT_AUTHENTICATION_CLASSES': (
+    'rest_framework_simplejwt.authentication.JWTAuthentication',
+  ),
+}
+
+SIMPLE_JWT = {
+  'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+  'REFRESH_TOKEN_LIFETIME': timedelta(days=1)
 }
 
 MIDDLEWARE = [
