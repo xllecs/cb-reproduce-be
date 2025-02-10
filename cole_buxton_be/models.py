@@ -2,14 +2,16 @@ from django.db import models
 
 # Create your models here.
 class Product(models.Model):
-  CATEGORIES = (
+  COLLECTIONS = (
+    ('new-launches', 'New Launches'),
+    ('anniversary-drop', 'Anniversary Drop'),
     ('footwear', 'Footwear'),
   )
 
   name = models.CharField(max_length=100)
   full_name = models.CharField(max_length=100, default='')
   color = models.CharField(max_length=100, default='black')
-  category = models.CharField(choices=CATEGORIES, max_length=100, default='footwear')
+  collection = models.CharField(choices=COLLECTIONS, max_length=100, default='footwear')
   price = models.IntegerField(default=0)
   description = models.TextField()
   details = models.CharField(max_length=100, default='')
@@ -19,6 +21,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
   product = models.ForeignKey(Product, on_delete=models.CASCADE)
+  product_code = models.CharField(max_length=100, default='')
   image = models.ImageField(upload_to='products/')
 
   class Meta:
