@@ -28,55 +28,51 @@ class CartItemType(DjangoObjectType):
     fields = '__all__'
 
 class CBQueryType(graphene.ObjectType):
-  product = graphene.Field(ProductType, id=graphene.ID(), full_name=graphene.String())
-  products = graphene.List(ProductType, collection=graphene.String())
-  images = graphene.List(ProductImageType, product_code=graphene.String(required=True))
-  product_images = graphene.List(ProductImageType, product_id=graphene.ID())
-  product_sizes = graphene.List(ProductSizeType, product_id=graphene.ID(required=True))
+  product = graphene.Field(ProductType, code=graphene.String())
+  products = graphene.List(ProductType, collection=graphene.String(), name=graphene.String())
+  product_images = graphene.List(ProductImageType, product_id=graphene.ID(), product_code=graphene.String())
+  product_sizes = graphene.List(ProductSizeType, product_code=graphene.String(required=True))
   cart_items = graphene.List(CartItemType)
 
-  def resolve_product(self, info, id=None, full_name=None):
-    cache_key = f"product:{id or full_name}"
+  # def resolve_product(self, info, id=None, full_name=None):
+  def resolve_product(self, info, code=None):
+    cache_key = f"product:{code}"
 
-    # redis_client.delete(cache_key)
     cached_product = redis_client.hgetall(cache_key)
-    # print(cached_product)
-    if cached_product:
-      product_type = ProductType(id=cached_product['id'], name=cached_product['name'], color=cached_product['color'], price=cached_product['price'], description=cached_product['description'], details=cached_product['details'])
-      product_type.pk = cached_product['id']
-      return product_type
-    
-    if id:
-      product = Product.objects.get(id=id)
-      redis_client.hset(cache_key, mapping={ 'id': id, 'name': product.name, 'color': product.color, 'price': product.price, 'description': product.description, 'details': product.details })
-      redis_client.expire(cache_key, 3600)
-      return product
 
-    if full_name:
-      product = Product.objects.get(full_name=full_name)
-      redis_client.hset(cache_key, mapping={ 'id': full_name, 'name': product.name, 'color': product.color, 'price': product.price, 'description': product.description, 'details': product.details })
-      redis_client.expire(cache_key, 3600)
-      return product
-    
-    return None
+    redis_client.delete(cache_key)
+    # if cached_product:
+    #   product_type = ProductType(id=cached_product['id'], product_code=cached_product['code'], name=cached_product['name'], color=cached_product['color'], price=cached_product['price'], description=cached_product['description'], details=cached_product['details'])
+    #   product_type.pk = cached_product['id']
+    #   return product_type
 
-  def resolve_products(self, info, collection=None):
+    product = Product.objects.get(code=code)
+    redis_client.hset(cache_key, mapping={ 'id': product.id, 'code': code, 'name': product.name, 'color': product.color, 'price': product.price, 'description': product.description, 'details': product.details })
+    redis_client.expire(cache_key, 3600)
+
+    return product
+
+  def resolve_products(self, info, collection=None, name=None):
     if collection:
       return Product.objects.filter(collection=collection)
 
+    if name:
+      return Product.objects.filter(name=name)
+
     return Product.objects.all()
-  
-  def resolve_images(self, info, product_code):
-    return ProductImage.objects.filter(product_code=product_code)
 	
-  def resolve_product_images(self, info, product_id):
-    return ProductImage.objects.filter(product_id=product_id)
+  def resolve_product_images(self, info, product_id=None, product_code=None):
+    # if product_id:
+    #   return ProductImage.objects.filter(product_id=product_id)
+
+    if product_code:
+      return ProductImage.objects.filter(product__code=product_code)
   
-  def resolve_product_sizes(self, info, product_id):
-    if product_id.isdigit():
-      product = Product.objects.get(id=product_id)
-    else:
-      product = Product.objects.get(full_name=product_id)
+  def resolve_product_sizes(self, info, product_code):
+    # if product_id.isdigit():
+    #   product = Product.objects.get(id=product_id)
+    # else:
+    product = Product.objects.get(code=product_code)
     return product.sizes.all()
 
   def resolve_cart_items(self, info):

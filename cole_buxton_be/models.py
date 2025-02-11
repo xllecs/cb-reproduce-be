@@ -9,20 +9,25 @@ class Product(models.Model):
   )
 
   name = models.CharField(max_length=100)
-  full_name = models.CharField(max_length=100, default='')
+  code = models.CharField(max_length=100, default='')
   color = models.CharField(max_length=100, default='black')
   collection = models.CharField(choices=COLLECTIONS, max_length=100, default='footwear')
   price = models.IntegerField(default=0)
   description = models.TextField()
   details = models.CharField(max_length=100, default='')
 
+  def __str__(self):
+    return self.code
+
   class Meta:
     db_table = 'cb_product'
 
 class ProductImage(models.Model):
-  product = models.ForeignKey(Product, on_delete=models.CASCADE)
-  product_code = models.CharField(max_length=100, default='')
-  image = models.ImageField(upload_to='products/')
+  product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+  url = models.ImageField(upload_to='products/')
+
+  def __str__(self):
+    return self.product.code
 
   class Meta:
     db_table = 'cb_product_image'
@@ -32,11 +37,14 @@ class ProductSize(models.Model):
   letter = models.CharField(max_length=5)
   stock = models.IntegerField()
 
+  def __str__(self):
+    return self.product.code + '-' + self.letter
+
   class Meta:
     db_table = 'cb_product_size'
 
 class CartItem(models.Model):
-  product_id = models.CharField(max_length=100)
+  product_code = models.CharField(max_length=100)
   size = models.CharField(default='', max_length=5)
   amount = models.IntegerField(default=1)
 
